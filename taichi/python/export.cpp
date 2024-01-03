@@ -12,15 +12,14 @@ namespace taichi {
 PYBIND11_MODULE(taichi_python, m) {
   m.doc() = "taichi_python";
 
-  for (auto &kv : InterfaceHolder::get_instance()->methods) {
-    kv.second(&m);
-  }
-
   export_lang(m);
   export_math(m);
   export_misc(m);
   export_visual(m);
   export_ggui(m);
+
+  for (auto &kv : InterfaceHolder::get_instance()->methods)
+    kv.second(&m);
 }
 
 }  // namespace taichi

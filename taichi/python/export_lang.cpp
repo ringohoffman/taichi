@@ -109,9 +109,150 @@ void export_lang(py::module &m) {
       .value("CLAMP", BoundaryMode::kClamp)
       .export_values();
 
+  py::enum_<SNodeAccessFlag>(m, "SNodeAccessFlag", py::arithmetic())
+      .value("block_local", SNodeAccessFlag::block_local)
+      .value("read_only", SNodeAccessFlag::read_only)
+      .value("mesh_local", SNodeAccessFlag::mesh_local)
+      .export_values();
+
+  py::enum_<BufferFormat>(m, "Format")
+#define PER_BUFFER_FORMAT(x) .value(#x, BufferFormat::x)
+#include "taichi/inc/rhi_constants.inc.h"
+#undef PER_EXTENSION
+      ;
+
+  py::enum_<aot::ArgKind>(m, "ArgKind")
+      .value("SCALAR", aot::ArgKind::kScalar)
+      .value("NDARRAY", aot::ArgKind::kNdarray)
+      // Using this MATRIX as Scalar alias, we can move to native matrix type
+      // when supported
+      .value("MATRIX", aot::ArgKind::kMatrix)
+      .value("TEXTURE", aot::ArgKind::kTexture)
+      .value("RWTEXTURE", aot::ArgKind::kRWTexture)
+      .export_values();
+
+  // Mesh Class
+  // Mesh related.
+  py::enum_<mesh::MeshTopology>(m, "MeshTopology", py::arithmetic())
+      .value("Triangle", mesh::MeshTopology::Triangle)
+      .value("Tetrahedron", mesh::MeshTopology::Tetrahedron)
+      .export_values();
+
+  py::enum_<mesh::MeshElementType>(m, "MeshElementType", py::arithmetic())
+      .value("Vertex", mesh::MeshElementType::Vertex)
+      .value("Edge", mesh::MeshElementType::Edge)
+      .value("Face", mesh::MeshElementType::Face)
+      .value("Cell", mesh::MeshElementType::Cell)
+      .export_values();
+
+  py::enum_<mesh::MeshRelationType>(m, "MeshRelationType", py::arithmetic())
+      .value("VV", mesh::MeshRelationType::VV)
+      .value("VE", mesh::MeshRelationType::VE)
+      .value("VF", mesh::MeshRelationType::VF)
+      .value("VC", mesh::MeshRelationType::VC)
+      .value("EV", mesh::MeshRelationType::EV)
+      .value("EE", mesh::MeshRelationType::EE)
+      .value("EF", mesh::MeshRelationType::EF)
+      .value("EC", mesh::MeshRelationType::EC)
+      .value("FV", mesh::MeshRelationType::FV)
+      .value("FE", mesh::MeshRelationType::FE)
+      .value("FF", mesh::MeshRelationType::FF)
+      .value("FC", mesh::MeshRelationType::FC)
+      .value("CV", mesh::MeshRelationType::CV)
+      .value("CE", mesh::MeshRelationType::CE)
+      .value("CF", mesh::MeshRelationType::CF)
+      .value("CC", mesh::MeshRelationType::CC)
+      .export_values();
+
+  py::enum_<mesh::ConvType>(m, "ConvType", py::arithmetic())
+      .value("l2g", mesh::ConvType::l2g)
+      .value("l2r", mesh::ConvType::l2r)
+      .value("g2r", mesh::ConvType::g2r)
+      .export_values();
+
+  auto &&texture =
+      py::enum_<TextureOpType>(m, "TextureOpType", py::arithmetic());
+  for (int t = 0; t <= (int)TextureOpType::kStore; t++)
+    texture.value(texture_op_type_name(TextureOpType(t)).c_str(),
+                  TextureOpType(t));
+  texture.export_values();
+
+  auto &&unary = py::enum_<UnaryOpType>(m, "UnaryOpType", py::arithmetic());
+  for (int t = 0; t <= (int)UnaryOpType::undefined; t++)
+    unary.value(unary_op_type_name(UnaryOpType(t)).c_str(), UnaryOpType(t));
+  unary.export_values();
+
+  auto &&bin = py::enum_<BinaryOpType>(m, "BinaryOpType", py::arithmetic());
+  for (int t = 0; t <= (int)BinaryOpType::undefined; t++)
+    bin.value(binary_op_type_name(BinaryOpType(t)).c_str(), BinaryOpType(t));
+  bin.export_values();
+
+  auto dataTypeClass = py::class_<DataType>(m, "DataType");
+  auto locationClass = py::class_<Location>(m, "Location");
+  auto debugInfoClass = py::class_<DebugInfo>(m, "DebugInfo");
+  auto compileConfigClass = py::class_<CompileConfig>(m, "CompileConfig");
+  auto kernelProfilerQueryResultClass =
+      py::class_<Program::KernelProfilerQueryResult>(
+          m, "KernelProfilerQueryResult");
+  auto kernelProfileTracedRecordClass =
+      py::class_<KernelProfileTracedRecord>(m, "KernelProfileTracedRecord");
+  auto astBuilderClass = py::class_<ASTBuilder>(m, "ASTBuilder");
+  auto deviceCapabilityConfigClass = py::class_<DeviceCapabilityConfig>(
+      m, "DeviceCapabilityConfig");  // NOLINT(bugprone-unused-raii)
+  auto compiledKernelDataClass = py::class_<CompiledKernelData>(
+      m, "CompiledKernelData");  // NOLINT(bugprone-unused-raii)
+  auto programClass = py::class_<Program>(m, "Program");
+  auto aotModuleBuilderClass =
+      py::class_<AotModuleBuilder>(m, "AotModuleBuilder");
+  auto axisClass = py::class_<Axis>(m, "Axis");
+  auto sNodeClass = py::class_<SNode>(m, "SNode");
+  auto sNodeTreeClass = py::class_<SNodeTree>(m, "SNodeTree");
+  auto deviceClass = py::class_<Device>(m, "Device");
+  auto deviceAllocationClass =
+      py::class_<DeviceAllocation>(m, "DeviceAllocation");
+  auto ndarrayClass = py::class_<Ndarray>(m, "Ndarray");
+  auto argPackClass = py::class_<ArgPack>(m, "ArgPack");
+  auto textureClass = py::class_<Texture>(m, "Texture");
+  auto argClass = py::class_<aot::Arg>(m, "Arg");
+  auto nodeClass = py::class_<Node>(m, "Node");  // NOLINT(bugprone-unused-raii)
+  auto sequentialClass = py::class_<Sequential, Node>(m, "Sequential");
+  auto graphBuilderClass = py::class_<GraphBuilder>(m, "GraphBuilder");
+  auto compiledGraphClass = py::class_<aot::CompiledGraph>(m, "CompiledGraph");
+  auto kernelClass = py::class_<Kernel>(m, "Kernel");
+  auto kernelLaunchContextClass =
+      py::class_<LaunchContextBuilder>(m, "KernelLaunchContext");
+  auto functionClass = py::class_<Function>(m, "Function");
+  auto expr = py::class_<Expr>(m, "Expr");
+  auto exprGroupClass = py::class_<ExprGroup>(m, "ExprGroup");
+  auto stmtClass = py::class_<Stmt>(m, "Stmt");  // NOLINT(bugprone-unused-raii)
+  auto functionKeyClass = py::class_<FunctionKey>(m, "FunctionKey");
+  auto typeClass = py::class_<Type>(m, "Type");
+  auto typeFactoryClass = py::class_<TypeFactory>(m, "TypeFactory");
+  auto bitStructTypeClass = py::class_<BitStructType>(
+      m, "BitStructType");  // NOLINT(bugprone-unused-raii)
+  auto bitStructTypeBuilderClass =
+      py::class_<BitStructTypeBuilder>(m, "BitStructTypeBuilder");
+  auto sNodeRegistryClass = py::class_<SNodeRegistry>(m, "SNodeRegistry");
+  auto sparseMatrixBuilderClass =
+      py::class_<SparseMatrixBuilder>(m, "SparseMatrixBuilder");
+  auto sparseMatrixClass = py::class_<SparseMatrix>(m, "SparseMatrix");
+  auto cuSparseMatrixClass =
+      py::class_<CuSparseMatrix, SparseMatrix>(m, "CuSparseMatrix");
+  auto sparseSolverClass = py::class_<SparseSolver>(m, "SparseSolver");
+  auto cuSparseSolverClass =
+      py::class_<CuSparseSolver, SparseSolver>(m, "CuSparseSolver");
+  auto cgfClass = py::class_<CG<Eigen::VectorXf, float>>(m, "CGf");
+  auto cgdClass = py::class_<CG<Eigen::VectorXd, double>>(m, "CGd");
+  auto cucgClass = py::class_<CUCG>(m, "CUCG");
+  auto meshClass =
+      py::class_<mesh::Mesh>(m, "Mesh");  // NOLINT(bugprone-unused-raii)
+  auto meshPtrClass =
+      py::class_<mesh::MeshPtr>(m, "MeshPtr");  // NOLINT(bugprone-unused-raii)
+  auto operationClass = py::class_<Operation>(m, "Operation");
+  auto internalOpClass = py::class_<InternalOp>(m, "InternalOp");
+
   // TODO(type): This should be removed
-  py::class_<DataType>(m, "DataType")
-      .def(py::init<Type *>())
+  dataTypeClass.def(py::init<Type *>())
       .def(py::self == py::self)
       .def("__hash__", &DataType::hash)
       .def("to_string", &DataType::to_string)
@@ -147,15 +288,24 @@ void export_lang(py::module &m) {
             return dt;
           }));
 
-  py::class_<DebugInfo>(m, "DebugInfo")
-      .def(py::init<>())
+  locationClass
+      .def(py::init([](int line_number, std::string var_name) -> Location {
+             Location loc;
+             loc.line_number = line_number;
+             loc.var_name = var_name;
+             return loc;
+           }),
+           py::arg("line_number"), py::arg("var_name"))
+      .def_readwrite("line_number", &Location::line_number)
+      .def_readwrite("var_name", &Location::var_name);
+
+  debugInfoClass.def(py::init<>())
       .def(py::init<std::string>())
       .def(py::init<>())
       .def_readwrite("tb", &DebugInfo::tb)
       .def_readwrite("src_loc", &DebugInfo::src_loc);
 
-  py::class_<CompileConfig>(m, "CompileConfig")
-      .def(py::init<>())
+  compileConfigClass.def(py::init<>())
       .def_readwrite("arch", &CompileConfig::arch)
       .def_readwrite("opt_level", &CompileConfig::opt_level)
       .def_readwrite("print_ir", &CompileConfig::print_ir)
@@ -264,13 +414,13 @@ void export_lang(py::module &m) {
       [&]() -> CompileConfig & { return default_compile_config; },
       py::return_value_policy::reference);
 
-  py::class_<Program::KernelProfilerQueryResult>(m, "KernelProfilerQueryResult")
+  kernelProfilerQueryResultClass
       .def_readwrite("counter", &Program::KernelProfilerQueryResult::counter)
       .def_readwrite("min", &Program::KernelProfilerQueryResult::min)
       .def_readwrite("max", &Program::KernelProfilerQueryResult::max)
       .def_readwrite("avg", &Program::KernelProfilerQueryResult::avg);
 
-  py::class_<KernelProfileTracedRecord>(m, "KernelProfileTracedRecord")
+  kernelProfileTracedRecordClass
       .def_readwrite("register_per_thread",
                      &KernelProfileTracedRecord::register_per_thread)
       .def_readwrite("shared_mem_per_block",
@@ -287,15 +437,8 @@ void export_lang(py::module &m) {
       .def_readwrite("metric_values",
                      &KernelProfileTracedRecord::metric_values);
 
-  py::enum_<SNodeAccessFlag>(m, "SNodeAccessFlag", py::arithmetic())
-      .value("block_local", SNodeAccessFlag::block_local)
-      .value("read_only", SNodeAccessFlag::read_only)
-      .value("mesh_local", SNodeAccessFlag::mesh_local)
-      .export_values();
-
   // Export ASTBuilder
-  py::class_<ASTBuilder>(m, "ASTBuilder")
-      .def("make_id_expr", &ASTBuilder::make_id_expr)
+  astBuilderClass.def("make_id_expr", &ASTBuilder::make_id_expr)
       .def("create_kernel_exprgroup_return",
            &ASTBuilder::create_kernel_exprgroup_return)
       .def("create_print", &ASTBuilder::create_print)
@@ -348,14 +491,7 @@ void export_lang(py::module &m) {
       .def("insert_snode_access_flag", &ASTBuilder::insert_snode_access_flag)
       .def("reset_snode_access_flag", &ASTBuilder::reset_snode_access_flag);
 
-  py::class_<DeviceCapabilityConfig>(
-      m, "DeviceCapabilityConfig");  // NOLINT(bugprone-unused-raii)
-
-  py::class_<CompiledKernelData>(
-      m, "CompiledKernelData");  // NOLINT(bugprone-unused-raii)
-
-  py::class_<Program>(m, "Program")
-      .def(py::init<>())
+  programClass.def(py::init<>())
       .def("config", &Program::compile_config,
            py::return_value_policy::reference)
       .def("sync_kernel_profiler",
@@ -485,16 +621,14 @@ void export_lang(py::module &m) {
       .def("launch_kernel", &Program::launch_kernel)
       .def("get_device_caps", &Program::get_device_caps);
 
-  py::class_<AotModuleBuilder>(m, "AotModuleBuilder")
-      .def("add_field", &AotModuleBuilder::add_field)
+  aotModuleBuilderClass.def("add_field", &AotModuleBuilder::add_field)
       .def("add", &AotModuleBuilder::add)
       .def("add_kernel_template", &AotModuleBuilder::add_kernel_template)
       .def("add_graph", &AotModuleBuilder::add_graph)
       .def("dump", &AotModuleBuilder::dump);
 
-  py::class_<Axis>(m, "Axis").def(py::init<int>());
-  py::class_<SNode>(m, "SNode")
-      .def(py::init<>())
+  axisClass.def(py::init<int>());
+  sNodeClass.def(py::init<>())
       .def_readwrite("parent", &SNode::parent)
       .def_readonly("type", &SNode::type)
       .def_readonly("id", &SNode::id)
@@ -561,13 +695,12 @@ void export_lang(py::module &m) {
       .def_readonly("offset_bytes_in_parent_cell",
                     &SNode::offset_bytes_in_parent_cell);
 
-  py::class_<SNodeTree>(m, "SNodeTree")
-      .def("id", &SNodeTree::id)
+  sNodeTreeClass.def("id", &SNodeTree::id)
       .def("destroy_snode_tree", [](SNodeTree *snode_tree, Program *program) {
         program->destroy_snode_tree(snode_tree);
       });
 
-  py::class_<DeviceAllocation>(m, "DeviceAllocation")
+  deviceAllocationClass
       .def(py::init([](uint64_t device, uint64_t alloc_id) -> DeviceAllocation {
              DeviceAllocation alloc;
              alloc.device = (Device *)device;
@@ -578,7 +711,7 @@ void export_lang(py::module &m) {
       .def_readonly("device", &DeviceAllocation::device)
       .def_readonly("alloc_id", &DeviceAllocation::alloc_id);
 
-  py::class_<Ndarray>(m, "Ndarray")
+  ndarrayClass
       .def("device_allocation_ptr", &Ndarray::get_device_allocation_ptr_as_int)
       .def("device_allocation", &Ndarray::get_device_allocation)
       .def("element_size", &Ndarray::get_element_size)
@@ -594,7 +727,7 @@ void export_lang(py::module &m) {
       .def_readonly("dtype", &Ndarray::dtype)
       .def_readonly("shape", &Ndarray::shape);
 
-  py::class_<ArgPack>(m, "ArgPack")
+  argPackClass
       .def("device_allocation_ptr", &ArgPack::get_device_allocation_ptr_as_int)
       .def("device_allocation", &ArgPack::get_device_allocation)
       .def("nelement", &ArgPack::get_nelement)
@@ -605,28 +738,12 @@ void export_lang(py::module &m) {
       .def("set_arg_nested_argpack", &ArgPack::set_arg_nested_argpack)
       .def_readonly("dtype", &ArgPack::dtype);
 
-  py::enum_<BufferFormat>(m, "Format")
-#define PER_BUFFER_FORMAT(x) .value(#x, BufferFormat::x)
-#include "taichi/inc/rhi_constants.inc.h"
-#undef PER_EXTENSION
-      ;
-
-  py::class_<Texture>(m, "Texture")
+  textureClass
       .def("device_allocation_ptr", &Texture::get_device_allocation_ptr_as_int)
       .def("from_ndarray", &Texture::from_ndarray)
       .def("from_snode", &Texture::from_snode);
 
-  py::enum_<aot::ArgKind>(m, "ArgKind")
-      .value("SCALAR", aot::ArgKind::kScalar)
-      .value("NDARRAY", aot::ArgKind::kNdarray)
-      // Using this MATRIX as Scalar alias, we can move to native matrix type
-      // when supported
-      .value("MATRIX", aot::ArgKind::kMatrix)
-      .value("TEXTURE", aot::ArgKind::kTexture)
-      .value("RWTEXTURE", aot::ArgKind::kRWTexture)
-      .export_values();
-
-  py::class_<aot::Arg>(m, "Arg")
+  argClass
       .def(py::init<aot::ArgKind, std::string, DataType &, size_t,
                     std::vector<int>>(),
            py::arg("tag"), py::arg("name"), py::arg("dtype"),
@@ -643,84 +760,79 @@ void export_lang(py::module &m) {
       .def("dtype", &aot::Arg::dtype)
       .def("channel_format", &aot::Arg::dtype);
 
-  py::class_<Node>(m, "Node");  // NOLINT(bugprone-unused-raii)
-
-  py::class_<Sequential, Node>(m, "Sequential")
-      .def(py::init<GraphBuilder *>())
+  sequentialClass.def(py::init<GraphBuilder *>())
       .def("append", &Sequential::append)
       .def("dispatch", &Sequential::dispatch);
 
-  py::class_<GraphBuilder>(m, "GraphBuilder")
-      .def(py::init<>())
+  graphBuilderClass.def(py::init<>())
       .def("dispatch", &GraphBuilder::dispatch)
       .def("compile", &GraphBuilder::compile)
       .def("create_sequential", &GraphBuilder::new_sequential_node,
            py::return_value_policy::reference)
       .def("seq", &GraphBuilder::seq, py::return_value_policy::reference);
 
-  py::class_<aot::CompiledGraph>(m, "CompiledGraph")
-      .def("jit_run", [](aot::CompiledGraph *self,
-                         const CompileConfig &compile_config,
-                         const py::dict &pyargs) {
-        std::unordered_map<std::string, aot::IValue> args;
-        auto insert_scalar_arg = [&args](std::string arg_name,
-                                         DataType expected_dtype,
-                                         py::object pyarg) {
-          auto type_id = expected_dtype->as<PrimitiveType>()->type;
-          switch (type_id) {
+  compiledGraphClass.def("jit_run", [](aot::CompiledGraph *self,
+                                       const CompileConfig &compile_config,
+                                       const py::dict &pyargs) {
+    std::unordered_map<std::string, aot::IValue> args;
+    auto insert_scalar_arg = [&args](std::string arg_name,
+                                     DataType expected_dtype,
+                                     py::object pyarg) {
+      auto type_id = expected_dtype->as<PrimitiveType>()->type;
+      switch (type_id) {
 #define PER_C_TYPE(type, ctype)                                           \
   case PrimitiveTypeID::type:                                             \
     args.insert({arg_name, aot::IValue::create(py::cast<ctype>(pyarg))}); \
     break;
 #include "taichi/inc/data_type_with_c_type.inc.h"
 #undef PER_C_TYPE
-            default:
-              TI_ERROR("Unsupported scalar type {}", type_id);
+        default:
+          TI_ERROR("Unsupported scalar type {}", type_id);
+      }
+    };
+
+    std::vector<std::unique_ptr<char[]>> matrix_buffers;
+    matrix_buffers.reserve(self->args.size());
+    std::vector<Matrix> matrices;
+    // Reserve to avoid changes in element addresses
+    matrices.reserve(self->args.size());
+    for (const auto &[arg_name, arg] : self->args) {
+      auto tag = arg.tag;
+      TI_ASSERT(pyargs.contains(arg_name.c_str()));
+      auto pyarg = pyargs[arg_name.c_str()];
+      if (tag == aot::ArgKind::kNdarray) {
+        auto &val = pyarg.cast<Ndarray &>();
+        args.insert({arg_name, aot::IValue::create(val)});
+      } else if (tag == aot::ArgKind::kTexture ||
+                 tag == aot::ArgKind::kRWTexture) {
+        auto &val = pyarg.cast<Texture &>();
+        args.insert({arg_name, aot::IValue::create(val)});
+      } else if (tag == aot::ArgKind::kScalar) {
+        auto expected_dtype = arg.dtype();
+        insert_scalar_arg(arg_name, expected_dtype, pyarg);
+      } else if (tag == aot::ArgKind::kMatrix) {
+        auto type_id = arg.dtype()->as<PrimitiveType>()->type;
+        switch (type_id) {
+          case PrimitiveTypeID::f16: {
+            auto arr = pyarg.cast<py::array_t<float32>>();
+            py::buffer_info buffer_info = arr.request();
+            auto length = buffer_info.size;
+            auto ptr = reinterpret_cast<intptr_t>(buffer_info.ptr);
+
+            std::unique_ptr<char[]> data(new char[128]);
+            for (uint32_t i = 0; i < length; i++) {
+              uint16 half = fp16_ieee_from_fp32_value(
+                  reinterpret_cast<float32 *>(ptr)[i]);
+              reinterpret_cast<uint16 *>(data.get())[i] = half;
+            }
+            matrix_buffers.emplace_back(std::move(data));
+
+            matrices.emplace_back(Matrix(
+                length, arg.dtype(),
+                reinterpret_cast<intptr_t>(matrix_buffers.back().get())));
+            args.insert({arg_name, aot::IValue::create(matrices.back())});
+            break;
           }
-        };
-
-        std::vector<std::unique_ptr<char[]>> matrix_buffers;
-        matrix_buffers.reserve(self->args.size());
-        std::vector<Matrix> matrices;
-        // Reserve to avoid changes in element addresses
-        matrices.reserve(self->args.size());
-        for (const auto &[arg_name, arg] : self->args) {
-          auto tag = arg.tag;
-          TI_ASSERT(pyargs.contains(arg_name.c_str()));
-          auto pyarg = pyargs[arg_name.c_str()];
-          if (tag == aot::ArgKind::kNdarray) {
-            auto &val = pyarg.cast<Ndarray &>();
-            args.insert({arg_name, aot::IValue::create(val)});
-          } else if (tag == aot::ArgKind::kTexture ||
-                     tag == aot::ArgKind::kRWTexture) {
-            auto &val = pyarg.cast<Texture &>();
-            args.insert({arg_name, aot::IValue::create(val)});
-          } else if (tag == aot::ArgKind::kScalar) {
-            auto expected_dtype = arg.dtype();
-            insert_scalar_arg(arg_name, expected_dtype, pyarg);
-          } else if (tag == aot::ArgKind::kMatrix) {
-            auto type_id = arg.dtype()->as<PrimitiveType>()->type;
-            switch (type_id) {
-              case PrimitiveTypeID::f16: {
-                auto arr = pyarg.cast<py::array_t<float32>>();
-                py::buffer_info buffer_info = arr.request();
-                auto length = buffer_info.size;
-                auto ptr = reinterpret_cast<intptr_t>(buffer_info.ptr);
-
-                std::unique_ptr<char[]> data(new char[128]);
-                for (uint32_t i = 0; i < length; i++) {
-                  uint16 half = fp16_ieee_from_fp32_value(
-                      reinterpret_cast<float32 *>(ptr)[i]);
-                  reinterpret_cast<uint16 *>(data.get())[i] = half;
-                }
-                matrix_buffers.emplace_back(std::move(data));
-
-                matrices.emplace_back(Matrix(
-                    length, arg.dtype(),
-                    reinterpret_cast<intptr_t>(matrix_buffers.back().get())));
-                args.insert({arg_name, aot::IValue::create(matrices.back())});
-                break;
-              }
 #define PER_C_TYPE(type, ctype)                                           \
   case PrimitiveTypeID::type: {                                           \
     auto arr = pyarg.cast<py::array_t<ctype>>();                          \
@@ -741,17 +853,17 @@ void export_lang(py::module &m) {
   }
 #include "taichi/inc/data_type_with_c_type.inc.h"
 #undef PER_C_TYPE
-              default:
-                TI_ERROR("Unsupported scalar type {}", type_id);
-            }
-          } else {
-            TI_NOT_IMPLEMENTED;
-          }
+          default:
+            TI_ERROR("Unsupported scalar type {}", type_id);
         }
-        self->jit_run(compile_config, args);
-      });
+      } else {
+        TI_NOT_IMPLEMENTED;
+      }
+    }
+    self->jit_run(compile_config, args);
+  });
 
-  py::class_<Kernel>(m, "Kernel")
+  kernelClass
       .def("no_activate",
            [](Kernel *self, SNode *snode) {
              // TODO(#2193): Also apply to @ti.func?
@@ -777,7 +889,7 @@ void export_lang(py::module &m) {
           },
           py::return_value_policy::reference);
 
-  py::class_<LaunchContextBuilder>(m, "KernelLaunchContext")
+  kernelLaunchContextClass
       .def("set_arg_int", &LaunchContextBuilder::set_arg_int)
       .def("set_arg_uint", &LaunchContextBuilder::set_arg_uint)
       .def("set_arg_float", &LaunchContextBuilder::set_arg_float)
@@ -797,8 +909,7 @@ void export_lang(py::module &m) {
       .def("get_struct_ret_uint", &LaunchContextBuilder::get_struct_ret_uint)
       .def("get_struct_ret_float", &LaunchContextBuilder::get_struct_ret_float);
 
-  py::class_<Function>(m, "Function")
-      .def("insert_scalar_param", &Function::insert_scalar_param)
+  functionClass.def("insert_scalar_param", &Function::insert_scalar_param)
       .def("insert_arr_param", &Function::insert_arr_param)
       .def("insert_ndarray_param", &Function::insert_ndarray_param)
       .def("insert_texture_param", &Function::insert_texture_param)
@@ -817,7 +928,6 @@ void export_lang(py::module &m) {
           },
           py::return_value_policy::reference);
 
-  py::class_<Expr> expr(m, "Expr");
   expr.def("snode", &Expr::snode, py::return_value_policy::reference)
       .def("is_external_tensor_expr",
            [](Expr *expr) { return expr->is<ExternalTensorExpression>(); })
@@ -892,12 +1002,9 @@ void export_lang(py::module &m) {
         return (uint64)e->expr.get();
       });
 
-  py::class_<ExprGroup>(m, "ExprGroup")
-      .def(py::init<>())
+  exprGroupClass.def(py::init<>())
       .def("size", [](ExprGroup *eg) { return eg->exprs.size(); })
       .def("push_back", &ExprGroup::push_back);
-
-  py::class_<Stmt>(m, "Stmt");  // NOLINT(bugprone-unused-raii)
 
   m.def("insert_internal_func_call", [&](Operation *op, const ExprGroup &args) {
     return Expr::make<InternalFuncCallExpression>(op, args.exprs);
@@ -1051,25 +1158,10 @@ void export_lang(py::module &m) {
         Expr::make<TexturePtrExpression, const std::vector<int> &, int, int,
                    const BufferFormat &, int, const DebugInfo &>);
 
-  auto &&texture =
-      py::enum_<TextureOpType>(m, "TextureOpType", py::arithmetic());
-  for (int t = 0; t <= (int)TextureOpType::kStore; t++)
-    texture.value(texture_op_type_name(TextureOpType(t)).c_str(),
-                  TextureOpType(t));
-  texture.export_values();
-
-  auto &&bin = py::enum_<BinaryOpType>(m, "BinaryOpType", py::arithmetic());
-  for (int t = 0; t <= (int)BinaryOpType::undefined; t++)
-    bin.value(binary_op_type_name(BinaryOpType(t)).c_str(), BinaryOpType(t));
-  bin.export_values();
   m.def("make_binary_op_expr",
         Expr::make<BinaryOpExpression, const BinaryOpType &, const Expr &,
                    const Expr &>);
 
-  auto &&unary = py::enum_<UnaryOpType>(m, "UnaryOpType", py::arithmetic());
-  for (int t = 0; t <= (int)UnaryOpType::undefined; t++)
-    unary.value(unary_op_type_name(UnaryOpType(t)).c_str(), UnaryOpType(t));
-  unary.export_values();
   m.def("make_unary_op_expr",
         Expr::make<UnaryOpExpression, const UnaryOpType &, const Expr &>);
 #define PER_TYPE(x)                                                  \
@@ -1175,8 +1267,7 @@ void export_lang(py::module &m) {
               mesh_ptr.ptr.get(), mesh_idx, to_type, neighbor_idx, dbg_info);
         });
 
-  py::class_<FunctionKey>(m, "FunctionKey")
-      .def(py::init<const std::string &, int, int>())
+  functionKeyClass.def(py::init<const std::string &, int, int>())
       .def_readonly("instance_id", &FunctionKey::instance_id);
 
   m.def("test_throw", [] {
@@ -1233,14 +1324,14 @@ void export_lang(py::module &m) {
 
   // Type system
 
-  py::class_<Type>(m, "Type").def("to_string", &Type::to_string);
+  typeClass.def("to_string", &Type::to_string);
 
   m.def("promoted_type", promoted_type);
 
   // Note that it is important to specify py::return_value_policy::reference for
   // the factory methods, otherwise pybind11 will delete the Types owned by
   // TypeFactory on Python-scope pointer destruction.
-  py::class_<TypeFactory>(m, "TypeFactory")
+  typeFactoryClass
       .def("get_quant_int_type", &TypeFactory::get_quant_int_type,
            py::arg("num_bits"), py::arg("is_signed"), py::arg("compute_type"),
            py::return_value_policy::reference)
@@ -1292,10 +1383,7 @@ void export_lang(py::module &m) {
   m.def("get_type_factory_instance", TypeFactory::get_instance,
         py::return_value_policy::reference);
 
-  // NOLINTNEXTLINE(bugprone-unused-raii)
-  py::class_<BitStructType>(m, "BitStructType");
-  py::class_<BitStructTypeBuilder>(m, "BitStructTypeBuilder")
-      .def(py::init<int>())
+  bitStructTypeBuilderClass.def(py::init<int>())
       .def("begin_placing_shared_exponent",
            &BitStructTypeBuilder::begin_placing_shared_exponent)
       .def("end_placing_shared_exponent",
@@ -1304,8 +1392,7 @@ void export_lang(py::module &m) {
       .def("build", &BitStructTypeBuilder::build,
            py::return_value_policy::reference);
 
-  py::class_<SNodeRegistry>(m, "SNodeRegistry")
-      .def(py::init<>())
+  sNodeRegistryClass.def(py::init<>())
       .def("create_root", &SNodeRegistry::create_root,
            py::return_value_policy::reference);
 
@@ -1318,7 +1405,7 @@ void export_lang(py::module &m) {
       py::return_value_policy::reference);
 
   // Sparse Matrix
-  py::class_<SparseMatrixBuilder>(m, "SparseMatrixBuilder")
+  sparseMatrixBuilderClass
       .def(py::init<int, int, int, DataType, const std::string &>(),
            py::arg("rows"), py::arg("cols"), py::arg("max_num_triplets"),
            py::arg("dt") = PrimitiveType::f32,
@@ -1338,8 +1425,7 @@ void export_lang(py::module &m) {
       .def("build_cuda", &SparseMatrixBuilder::build_cuda)
       .def("get_addr", [](SparseMatrixBuilder *mat) { return uint64(mat); });
 
-  py::class_<SparseMatrix>(m, "SparseMatrix")
-      .def(py::init<>())
+  sparseMatrixClass.def(py::init<>())
       .def(py::init<int, int, DataType>(), py::arg("rows"), py::arg("cols"),
            py::arg("dt") = PrimitiveType::f32)
       .def(py::init<SparseMatrix &>())
@@ -1386,8 +1472,7 @@ void export_lang(py::module &m) {
   MAKE_SPARSE_MATRIX(64, ColMajor, d);
   MAKE_SPARSE_MATRIX(64, RowMajor, d);
 
-  py::class_<CuSparseMatrix, SparseMatrix>(m, "CuSparseMatrix")
-      .def(py::init<int, int, DataType>())
+  cuSparseMatrixClass.def(py::init<int, int, DataType>())
       .def(py::init<const CuSparseMatrix &>())
       .def("spmv", &CuSparseMatrix::nd_spmv)
       .def(py::self + py::self)
@@ -1399,8 +1484,7 @@ void export_lang(py::module &m) {
       .def("get_element", &CuSparseMatrix::get_element)
       .def("to_string", &CuSparseMatrix::to_string);
 
-  py::class_<SparseSolver>(m, "SparseSolver")
-      .def("compute", &SparseSolver::compute)
+  sparseSolverClass.def("compute", &SparseSolver::compute)
       .def("analyze_pattern", &SparseSolver::analyze_pattern)
       .def("factorize", &SparseSolver::factorize)
       .def("info", &SparseSolver::info);
@@ -1432,8 +1516,7 @@ void export_lang(py::module &m) {
   REGISTER_EIGEN_SOLVER(float64, LU, AMD, d)
   REGISTER_EIGEN_SOLVER(float64, LU, COLAMD, d)
 
-  py::class_<CuSparseSolver, SparseSolver>(m, "CuSparseSolver")
-      .def("compute", &CuSparseSolver::compute)
+  cuSparseSolverClass.def("compute", &CuSparseSolver::compute)
       .def("analyze_pattern", &CuSparseSolver::analyze_pattern)
       .def("factorize", &CuSparseSolver::factorize)
       .def("solve_rf", &CuSparseSolver::solve_rf)
@@ -1443,8 +1526,7 @@ void export_lang(py::module &m) {
   m.def("make_cusparse_solver", &make_cusparse_solver);
 
   // Conjugate Gradient solver
-  py::class_<CG<Eigen::VectorXf, float>>(m, "CGf")
-      .def(py::init<SparseMatrix &, int, float, bool>())
+  cgfClass.def(py::init<SparseMatrix &, int, float, bool>())
       .def("solve", &CG<Eigen::VectorXf, float>::solve)
       .def("set_x", &CG<Eigen::VectorXf, float>::set_x)
       .def("get_x", &CG<Eigen::VectorXf, float>::get_x)
@@ -1452,8 +1534,7 @@ void export_lang(py::module &m) {
       .def("set_b", &CG<Eigen::VectorXf, float>::set_b)
       .def("set_b_ndarray", &CG<Eigen::VectorXf, float>::set_b_ndarray)
       .def("is_success", &CG<Eigen::VectorXf, float>::is_success);
-  py::class_<CG<Eigen::VectorXd, double>>(m, "CGd")
-      .def(py::init<SparseMatrix &, int, double, bool>())
+  cgdClass.def(py::init<SparseMatrix &, int, double, bool>())
       .def("solve", &CG<Eigen::VectorXd, double>::solve)
       .def("set_x", &CG<Eigen::VectorXd, double>::set_x)
       .def("set_x_ndarray", &CG<Eigen::VectorXd, double>::set_x_ndarray)
@@ -1470,51 +1551,11 @@ void export_lang(py::module &m) {
     return make_cg_solver<Eigen::VectorXd, double>(A, max_iters, tol, verbose);
   });
 
-  py::class_<CUCG>(m, "CUCG").def("solve", &CUCG::solve);
+  cucgClass.def("solve", &CUCG::solve);
   m.def("make_cucg_solver", make_cucg_solver);
 
   // Mesh Class
   // Mesh related.
-  py::enum_<mesh::MeshTopology>(m, "MeshTopology", py::arithmetic())
-      .value("Triangle", mesh::MeshTopology::Triangle)
-      .value("Tetrahedron", mesh::MeshTopology::Tetrahedron)
-      .export_values();
-
-  py::enum_<mesh::MeshElementType>(m, "MeshElementType", py::arithmetic())
-      .value("Vertex", mesh::MeshElementType::Vertex)
-      .value("Edge", mesh::MeshElementType::Edge)
-      .value("Face", mesh::MeshElementType::Face)
-      .value("Cell", mesh::MeshElementType::Cell)
-      .export_values();
-
-  py::enum_<mesh::MeshRelationType>(m, "MeshRelationType", py::arithmetic())
-      .value("VV", mesh::MeshRelationType::VV)
-      .value("VE", mesh::MeshRelationType::VE)
-      .value("VF", mesh::MeshRelationType::VF)
-      .value("VC", mesh::MeshRelationType::VC)
-      .value("EV", mesh::MeshRelationType::EV)
-      .value("EE", mesh::MeshRelationType::EE)
-      .value("EF", mesh::MeshRelationType::EF)
-      .value("EC", mesh::MeshRelationType::EC)
-      .value("FV", mesh::MeshRelationType::FV)
-      .value("FE", mesh::MeshRelationType::FE)
-      .value("FF", mesh::MeshRelationType::FF)
-      .value("FC", mesh::MeshRelationType::FC)
-      .value("CV", mesh::MeshRelationType::CV)
-      .value("CE", mesh::MeshRelationType::CE)
-      .value("CF", mesh::MeshRelationType::CF)
-      .value("CC", mesh::MeshRelationType::CC)
-      .export_values();
-
-  py::enum_<mesh::ConvType>(m, "ConvType", py::arithmetic())
-      .value("l2g", mesh::ConvType::l2g)
-      .value("l2r", mesh::ConvType::l2r)
-      .value("g2r", mesh::ConvType::g2r)
-      .export_values();
-
-  py::class_<mesh::Mesh>(m, "Mesh");        // NOLINT(bugprone-unused-raii)
-  py::class_<mesh::MeshPtr>(m, "MeshPtr");  // NOLINT(bugprone-unused-raii)
-
   m.def("element_order", mesh::element_order);
   m.def("from_end_element_order", mesh::from_end_element_order);
   m.def("to_end_element_order", mesh::to_end_element_order);
@@ -1587,9 +1628,6 @@ void export_lang(py::module &m) {
       ::Sleep(100);
 #endif
   });
-
-  auto operationClass = py::class_<Operation>(m, "Operation");
-  auto internalOpClass = py::class_<InternalOp>(m, "InternalOp");
 
 #define PER_INTERNAL_OP(x)                                           \
   internalOpClass.def_property_readonly_static(                      \

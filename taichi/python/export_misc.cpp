@@ -68,7 +68,12 @@ void print_all_units() {
 }
 
 void export_misc(py::module &m) {
-  py::class_<Config>(m, "Config");  // NOLINT(bugprone-unused-raii)
+  auto configClass =
+      py::class_<Config>(m, "Config");  // NOLINT(bugprone-unused-raii)
+  auto taskClass = py::class_<Task, std::shared_ptr<Task>>(m, "Task");
+  auto benchmarkClass =
+      py::class_<Benchmark, std::shared_ptr<Benchmark>>(m, "Benchmark");
+
   py::register_exception_translator([](std::exception_ptr p) {
     try {
       if (p)
@@ -78,14 +83,12 @@ void export_misc(py::module &m) {
     }
   });
 
-  py::class_<Task, std::shared_ptr<Task>>(m, "Task")
-      .def("initialize", &Task::initialize)
+  taskClass.def("initialize", &Task::initialize)
       .def("run",
            static_cast<std::string (Task::*)(const std::vector<std::string> &)>(
                &Task::run));
 
-  py::class_<Benchmark, std::shared_ptr<Benchmark>>(m, "Benchmark")
-      .def("run", &Benchmark::run)
+  benchmarkClass.def("run", &Benchmark::run)
       .def("test", &Benchmark::test)
       .def("initialize", &Benchmark::initialize);
 

@@ -16,16 +16,21 @@ void export_visual(py::module &m) {
   using Type = GUI::KeyEvent::Type;
 
   auto key_event = py::class_<GUI::KeyEvent>(m, "KeyEvent");
-  key_event.def_readonly("type", &GUI::KeyEvent::type)
-      .def_readonly("key", &GUI::KeyEvent::key)
-      .def_readonly("pos", &GUI::KeyEvent::pos)
-      .def_readonly("delta", &GUI::KeyEvent::delta);
+  auto guiClass = py::class_<GUI>(m, "GUI");
+  auto canvasClass = py::class_<Canvas>(m, "Canvas");
+  auto lineClass = py::class_<Line>(m, "Line");
+  auto circleClass = py::class_<Circle>(m, "Circle");
+
   py::enum_<GUI::KeyEvent::Type>(key_event, "EType")
       .value("Move", Type::move)
       .value("Press", Type::press)
       .value("Release", Type::release);
-  py::class_<GUI>(m, "GUI")
-      .def(py::init<std::string, Vector2i, bool, bool, bool, uintptr_t>())
+  key_event.def_readonly("type", &GUI::KeyEvent::type)
+      .def_readonly("key", &GUI::KeyEvent::key)
+      .def_readonly("pos", &GUI::KeyEvent::pos)
+      .def_readonly("delta", &GUI::KeyEvent::delta);
+
+  guiClass.def(py::init<std::string, Vector2i, bool, bool, bool, uintptr_t>())
       .def_readwrite("frame_delta_limit", &GUI::frame_delta_limit)
       .def_readwrite("should_close", &GUI::should_close)
       .def("get_canvas", &GUI::get_canvas, py::return_value_policy::reference)
@@ -82,7 +87,8 @@ void export_visual(py::module &m) {
       .def("get_cursor_pos", &GUI::get_cursor_pos)
       .def_readwrite("title", &GUI::window_name)
       .def("update", &GUI::update);
-  py::class_<Canvas>(m, "Canvas")
+
+  canvasClass
       .def("clear", static_cast<void (Canvas::*)(uint32)>(&Canvas::clear))
       .def("rect", &Canvas::rect, py::return_value_policy::reference)
       .def("path",
@@ -97,17 +103,18 @@ void export_visual(py::module &m) {
       .def("circle", static_cast<Circle &(Canvas::*)(Vector2)>(&Canvas::circle),
            py::return_value_policy::reference)
       .def("text", &Canvas::text);
-  py::class_<Line>(m, "Line")
-      .def("finish", &Line::finish)
+
+  lineClass.def("finish", &Line::finish)
       .def("radius", &Line::radius, py::return_value_policy::reference)
       .def("close", &Line::close, py::return_value_policy::reference)
       .def("color", static_cast<Line &(Line::*)(int)>(&Line::color),
            py::return_value_policy::reference);
-  py::class_<Circle>(m, "Circle")
-      .def("finish", &Circle::finish)
+
+  circleClass.def("finish", &Circle::finish)
       .def("radius", &Circle::radius, py::return_value_policy::reference)
       .def("color", static_cast<Circle &(Circle::*)(int)>(&Circle::color),
            py::return_value_policy::reference);
+
   m.def("imwrite", &imwrite);
   m.def("imread", &imread);
   m.def("imfree", &imfree);

@@ -658,99 +658,6 @@ struct PyWindow {
 void export_ggui(py::module &m) {
   m.attr("GGUI_AVAILABLE") = py::bool_(true);
 
-  py::class_<PyWindow>(m, "PyWindow")
-      .def(py::init<Program *, std::string, py::tuple, py::tuple, bool, bool,
-                    double, std::string, Arch>())
-      .def("get_canvas", &PyWindow::get_canvas)
-      .def("get_scene", &PyWindow::get_scene)
-      .def("show", &PyWindow::show)
-      .def("get_window_shape", &PyWindow::get_window_shape)
-      .def("write_image", &PyWindow::write_image)
-      .def("copy_depth_buffer_to_ndarray",
-           &PyWindow::copy_depth_buffer_to_ndarray)
-      .def("get_image_buffer_as_numpy", &PyWindow::get_image_buffer)
-      .def("is_pressed", &PyWindow::is_pressed)
-      .def("get_cursor_pos", &PyWindow::py_get_cursor_pos)
-      .def("is_running", &PyWindow::is_running)
-      .def("set_is_running", &PyWindow::set_is_running)
-      .def("get_event", &PyWindow::get_event)
-      .def("get_events", &PyWindow::get_events)
-      .def("get_current_event", &PyWindow::get_current_event)
-      .def("set_current_event", &PyWindow::set_current_event)
-      .def("destroy", &PyWindow::destroy)
-      .def("GUI", &PyWindow::gui);
-
-  py::class_<PyCanvas>(m, "PyCanvas")
-      .def("set_background_color", &PyCanvas::set_background_color)
-      .def("set_image", &PyCanvas::set_image)
-      .def("set_image_texture", &PyCanvas::set_image_texture)
-      .def("triangles", &PyCanvas::triangles)
-      .def("lines", &PyCanvas::lines)
-      .def("circles", &PyCanvas::circles)
-      .def("scene", &PyCanvas::scene)
-      .def("scene_v2", &PyCanvas::scene_v2);
-
-  py::class_<PyGui>(m, "PyGui")
-      .def("begin", &PyGui::begin)
-      .def("end", &PyGui::end)
-      .def("text", &PyGui::text)
-      .def("text_colored", &PyGui::text_colored)
-      .def("checkbox", &PyGui::checkbox)
-      .def("slider_int", &PyGui::slider_int)
-      .def("slider_float", &PyGui::slider_float)
-      .def("color_edit_3", &PyGui::color_edit_3)
-      .def("button", &PyGui::button);
-
-  py::class_<PyScene>(m, "PyScene")
-      .def(py::init<>())
-      .def("set_camera", &PyScene::set_camera)
-      .def("lines", &PyScene::lines)
-      .def("mesh", &PyScene::mesh)
-      .def("particles", &PyScene::particles)
-      .def("mesh_instance", &PyScene::mesh_instance)
-      .def("point_light", &PyScene::point_light)
-      .def("ambient_light", &PyScene::ambient_light);
-
-  py::class_<PySceneV2>(m, "PySceneV2")
-      .def("set_camera", &PySceneV2::set_camera)
-      .def("lines", &PySceneV2::lines)
-      .def("mesh", &PySceneV2::mesh)
-      .def("particles", &PySceneV2::particles)
-      .def("mesh_instance", &PySceneV2::mesh_instance)
-      .def("point_light", &PySceneV2::point_light)
-      .def("ambient_light", &PySceneV2::ambient_light);
-
-  py::class_<PyCamera>(m, "PyCamera")
-      .def(py::init<>())
-      .def("lookat", &PyCamera::lookat)
-      .def("position", &PyCamera::position)
-      .def("up", &PyCamera::up)
-      .def("projection_mode", &PyCamera::projection_mode)
-      .def("fov", &PyCamera::fov)
-      .def("left", &PyCamera::left)
-      .def("right", &PyCamera::right)
-      .def("top", &PyCamera::top)
-      .def("bottom", &PyCamera::bottom)
-      .def("z_near", &PyCamera::z_near)
-      .def("z_far", &PyCamera::z_far)
-      .def("get_view_matrix", &PyCamera::get_view_matrix)
-      .def("get_projection_matrix", &PyCamera::get_projection_matrix);
-
-  py::class_<Event>(m, "Event")
-      .def_property("key", &Event::get_key, &Event::set_key);
-
-  py::class_<FieldInfo>(m, "FieldInfo")
-      .def(py::init<>())
-      .def_property("valid", &FieldInfo::get_valid, &FieldInfo::set_valid)
-      .def_property("num_elements", &FieldInfo::get_num_elements,
-                    &FieldInfo::set_num_elements)
-      .def_property("shape", &FieldInfo::get_shape, &FieldInfo::set_shape)
-      .def_property("field_source", &FieldInfo::get_field_source,
-                    &FieldInfo::set_field_source)
-      .def_property("dtype", &FieldInfo::get_dtype, &FieldInfo::set_dtype)
-      .def_property("dev_alloc", &FieldInfo::get_dev_alloc,
-                    &FieldInfo::set_dev_alloc);
-
   py::enum_<EventType>(m, "EventType")
       .value("Any", EventType::Any)
       .value("Press", EventType::Press)
@@ -772,6 +679,101 @@ void export_ggui(py::module &m) {
       .value("Line", taichi::lang::PolygonMode::Line)
       .value("Point", taichi::lang::PolygonMode::Point)
       .export_values();
+
+  auto pyWindowClass = py::class_<PyWindow>(m, "PyWindow");
+  auto pyCanvasClass = py::class_<PyCanvas>(m, "PyCanvas");
+  auto pyGuiClass = py::class_<PyGui>(m, "PyGui");
+  auto pySceneClass = py::class_<PyScene>(m, "PyScene");
+  auto pySceneV2Class = py::class_<PySceneV2>(m, "PySceneV2");
+  auto pyCameraClass = py::class_<PyCamera>(m, "PyCamera");
+  auto pyEventClass = py::class_<Event>(m, "Event");
+  auto pyFieldInfoClass = py::class_<FieldInfo>(m, "FieldInfo");
+
+  pyWindowClass
+      .def(py::init<Program *, std::string, py::tuple, py::tuple, bool, bool,
+                    double, std::string, Arch>())
+      .def("get_canvas", &PyWindow::get_canvas)
+      .def("get_scene", &PyWindow::get_scene)
+      .def("show", &PyWindow::show)
+      .def("get_window_shape", &PyWindow::get_window_shape)
+      .def("write_image", &PyWindow::write_image)
+      .def("copy_depth_buffer_to_ndarray",
+           &PyWindow::copy_depth_buffer_to_ndarray)
+      .def("get_image_buffer_as_numpy", &PyWindow::get_image_buffer)
+      .def("is_pressed", &PyWindow::is_pressed)
+      .def("get_cursor_pos", &PyWindow::py_get_cursor_pos)
+      .def("is_running", &PyWindow::is_running)
+      .def("set_is_running", &PyWindow::set_is_running)
+      .def("get_event", &PyWindow::get_event)
+      .def("get_events", &PyWindow::get_events)
+      .def("get_current_event", &PyWindow::get_current_event)
+      .def("set_current_event", &PyWindow::set_current_event)
+      .def("destroy", &PyWindow::destroy)
+      .def("GUI", &PyWindow::gui);
+
+  pyCanvasClass.def("set_background_color", &PyCanvas::set_background_color)
+      .def("set_image", &PyCanvas::set_image)
+      .def("set_image_texture", &PyCanvas::set_image_texture)
+      .def("triangles", &PyCanvas::triangles)
+      .def("lines", &PyCanvas::lines)
+      .def("circles", &PyCanvas::circles)
+      .def("scene", &PyCanvas::scene)
+      .def("scene_v2", &PyCanvas::scene_v2);
+
+  pyGuiClass.def("begin", &PyGui::begin)
+      .def("end", &PyGui::end)
+      .def("text", &PyGui::text)
+      .def("text_colored", &PyGui::text_colored)
+      .def("checkbox", &PyGui::checkbox)
+      .def("slider_int", &PyGui::slider_int)
+      .def("slider_float", &PyGui::slider_float)
+      .def("color_edit_3", &PyGui::color_edit_3)
+      .def("button", &PyGui::button);
+
+  pySceneClass.def(py::init<>())
+      .def("set_camera", &PyScene::set_camera)
+      .def("lines", &PyScene::lines)
+      .def("mesh", &PyScene::mesh)
+      .def("particles", &PyScene::particles)
+      .def("mesh_instance", &PyScene::mesh_instance)
+      .def("point_light", &PyScene::point_light)
+      .def("ambient_light", &PyScene::ambient_light);
+
+  pySceneV2Class.def("set_camera", &PySceneV2::set_camera)
+      .def("lines", &PySceneV2::lines)
+      .def("mesh", &PySceneV2::mesh)
+      .def("particles", &PySceneV2::particles)
+      .def("mesh_instance", &PySceneV2::mesh_instance)
+      .def("point_light", &PySceneV2::point_light)
+      .def("ambient_light", &PySceneV2::ambient_light);
+
+  pyCameraClass.def(py::init<>())
+      .def("lookat", &PyCamera::lookat)
+      .def("position", &PyCamera::position)
+      .def("up", &PyCamera::up)
+      .def("projection_mode", &PyCamera::projection_mode)
+      .def("fov", &PyCamera::fov)
+      .def("left", &PyCamera::left)
+      .def("right", &PyCamera::right)
+      .def("top", &PyCamera::top)
+      .def("bottom", &PyCamera::bottom)
+      .def("z_near", &PyCamera::z_near)
+      .def("z_far", &PyCamera::z_far)
+      .def("get_view_matrix", &PyCamera::get_view_matrix)
+      .def("get_projection_matrix", &PyCamera::get_projection_matrix);
+
+  pyEventClass.def_property("key", &Event::get_key, &Event::set_key);
+
+  pyFieldInfoClass.def(py::init<>())
+      .def_property("valid", &FieldInfo::get_valid, &FieldInfo::set_valid)
+      .def_property("num_elements", &FieldInfo::get_num_elements,
+                    &FieldInfo::set_num_elements)
+      .def_property("shape", &FieldInfo::get_shape, &FieldInfo::set_shape)
+      .def_property("field_source", &FieldInfo::get_field_source,
+                    &FieldInfo::set_field_source)
+      .def_property("dtype", &FieldInfo::get_dtype, &FieldInfo::set_dtype)
+      .def_property("dev_alloc", &FieldInfo::get_dev_alloc,
+                    &FieldInfo::set_dev_alloc);
 }
 
 }  // namespace taichi::ui
